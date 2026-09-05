@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CrisisLens — AI Command Center</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
@@ -29,6 +29,8 @@
   --green-dim:rgba(0,217,126,0.12);
   --purple:   #A78BFA;
   --purple-dim:rgba(167,139,250,0.12);
+  --gold:     #FFD166;
+  --gold-dim: rgba(255,209,102,0.15);
 
   --text:     #E8EDF5;
   --muted:    #5A6478;
@@ -52,6 +54,8 @@
   --green-dim:rgba(42,157,143,0.15);
   --purple:   #7209B7;
   --purple-dim:rgba(114,9,183,0.15);
+  --gold:     #FFC300;
+  --gold-dim: rgba(255,195,0,0.15);
 
   --text:     #F1FAEE;
   --muted:    #6C7D93;
@@ -75,6 +79,8 @@
   --green-dim:rgba(0,255,102,0.14);
   --purple:   #38EF7D;
   --purple-dim:rgba(56,239,125,0.14);
+  --gold:     #00FF66;
+  --gold-dim: rgba(0,255,102,0.15);
 
   --text:     #EAFFEA;
   --muted:    #3E6B47;
@@ -83,8 +89,9 @@
 
 :root{
   --font:     'Inter', sans-serif;
+  --font-logo:'Cinzel', serif;
   --mono:     'JetBrains Mono', monospace;
-  --sidebar:  220px;
+  --sidebar-w:220px;
   --topbar:   56px;
   --r:        8px;
 }
@@ -113,33 +120,143 @@ body{
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 
-/* ── Sidebar ───────────────────────────────────────────────────── */
+/* ── SPLASH INTRO SCREEN (CrisisLens Logo Pop-up) ────────────────── */
+.splash-screen{
+  position:fixed;inset:0;
+  background:radial-gradient(circle at center, #0F2238 0%, #060A12 70%, #020408 100%);
+  z-index:999999;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  transition:all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor:pointer;
+}
+.splash-screen.fade-out{
+  opacity:0;
+  transform:scale(1.08);
+  pointer-events:none;
+}
+.splash-card{
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;text-align:center;
+  animation:splashPop 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes splashPop{
+  0%{transform:scale(0.7);opacity:0}
+  50%{transform:scale(1.05);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+.splash-emblem-wrap{
+  position:relative;
+  width:180px;height:180px;
+  margin-bottom:18px;
+}
+.splash-reticle-ring{
+  position:absolute;inset:-16px;
+  border:1.5px dashed rgba(255,209,102,0.4);
+  border-radius:50%;
+  animation:reticleSpin 18s linear infinite;
+}
+@keyframes reticleSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.splash-title{
+  font-family:var(--font-logo);
+  font-size:32px;
+  font-weight:800;
+  letter-spacing:0.18em;
+  background:linear-gradient(135deg,#FFE29F 0%,#FFAE34 50%,#D18E00 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px rgba(255,174,52,0.5));
+  margin-bottom:6px;
+}
+.splash-sub{
+  font-size:11px;
+  letter-spacing:0.35em;
+  color:#48CAE4;
+  text-transform:uppercase;
+  font-family:var(--mono);
+  margin-bottom:24px;
+}
+.splash-progress-bar{
+  width:260px;height:4px;
+  background:rgba(255,255,255,0.1);
+  border-radius:3px;overflow:hidden;
+  position:relative;margin-bottom:10px;
+}
+.splash-progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,#00E5FF,#FFAE34);
+  width:0%;
+  animation:splashLoad 1.8s ease-in-out forwards;
+}
+@keyframes splashLoad{0%{width:0%}60%{width:75%}100%{width:100%}}
+.splash-status-text{
+  font-family:var(--mono);
+  font-size:10px;
+  color:var(--dim);
+}
+.splash-skip-btn{
+  margin-top:16px;
+  background:transparent;
+  border:1px solid rgba(0,229,255,0.3);
+  color:var(--cyan);
+  font-family:var(--mono);
+  font-size:10px;
+  padding:4px 12px;border-radius:4px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.splash-skip-btn:hover{background:var(--cyan-dim);border-color:var(--cyan)}
+
+/* ── Slidable / Collapsible Sidebar ────────────────────────────── */
 .sidebar{
-  width:var(--sidebar);
+  width:var(--sidebar-w);
   height:100vh;
   background:var(--surface);
   border-right:1px solid var(--border);
   display:flex;flex-direction:column;
   flex-shrink:0;
   position:relative;z-index:10;
+  transition:width 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
+  overflow:hidden;
 }
+.sidebar.collapsed{width:64px}
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .logo-sub,
+.sidebar.collapsed .nav-section-label,
+.sidebar.collapsed .mission-card,
+.sidebar.collapsed .emergency-btn span,
+.sidebar.collapsed .nav-item span{display:none}
+.sidebar.collapsed .nav-item{justify-content:center;padding:12px}
+.sidebar.collapsed .sidebar-logo{justify-content:center;padding:16px 0}
+.sidebar.collapsed .emergency-btn{margin:0 8px 14px;padding:10px 0}
+
 .sidebar-logo{
-  padding:18px 18px 14px;
+  padding:16px 16px 12px;
   border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:10px;
+  cursor:pointer;
 }
-.logo-icon{
-  width:32px;height:32px;
-  background:linear-gradient(135deg,var(--cyan),#0070FF);
-  border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;
-  box-shadow:0 0 15px rgba(0,229,255,0.3);
+.brand-logo-svg{
+  width:36px;height:36px;
+  flex-shrink:0;
+  filter:drop-shadow(0 0 8px rgba(255,195,0,0.4));
+  transition:transform .2s;
 }
-.logo-text{font-size:13px;font-weight:700;letter-spacing:0.04em;line-height:1.2}
-.logo-sub{font-size:9px;font-weight:400;color:var(--muted);letter-spacing:0.1em}
+.brand-logo-svg:hover{transform:scale(1.06)}
+.logo-text{
+  font-family:var(--font-logo);
+  font-size:13.5px;
+  font-weight:700;
+  letter-spacing:0.1em;
+  background:linear-gradient(135deg,#FFE29F 0%,#FFAE34 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  line-height:1.2;
+}
+.logo-sub{font-size:8.5px;font-weight:500;color:var(--cyan);letter-spacing:0.12em;font-family:var(--mono)}
 
-.nav{padding:10px 0;flex:1;overflow-y:auto}
+.nav{padding:10px 0;flex:1;overflow-y:auto;overflow-x:hidden}
 .nav-item{
   display:flex;align-items:center;gap:10px;
   padding:9px 18px;
@@ -149,6 +266,7 @@ body{
   transition:all .15s;
   font-size:12.5px;font-weight:500;
   text-decoration:none;
+  white-space:nowrap;
 }
 .nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03)}
 .nav-item.active{
@@ -170,6 +288,7 @@ body{
   font-size:9px;font-weight:600;
   color:var(--muted);letter-spacing:0.12em;
   text-transform:uppercase;
+  white-space:nowrap;
 }
 
 .mission-card{
@@ -199,6 +318,7 @@ body{
   letter-spacing:0.06em;
   cursor:pointer;
   transition:background .2s;
+  white-space:nowrap;
 }
 .emergency-btn:hover{background:rgba(255,59,92,0.25)}
 .pulse-dot{
@@ -218,17 +338,30 @@ body{
 .topbar{
   height:var(--topbar);
   border-bottom:1px solid var(--border);
-  display:flex;align-items:center;gap:12px;
-  padding:0 20px;
+  display:flex;align-items:center;gap:10px;
+  padding:0 16px;
   background:var(--surface);
   flex-shrink:0;
 }
+
+.sidebar-toggle-btn{
+  width:32px;height:32px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:6px;
+  color:var(--cyan);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:16px;
+  transition:all .15s;
+}
+.sidebar-toggle-btn:hover{border-color:var(--cyan);background:var(--cyan-dim)}
+
 .search-wrap{
-  flex:1;max-width:340px;
+  flex:1;max-width:240px;
   display:flex;align-items:center;gap:8px;
   background:var(--surface2);
   border:1px solid var(--border);
-  border-radius:6px;padding:0 12px;height:32px;
+  border-radius:6px;padding:0 10px;height:32px;
 }
 .search-wrap input{
   background:none;border:none;outline:none;
@@ -237,11 +370,22 @@ body{
 .search-wrap input::placeholder{color:var(--muted)}
 .search-wrap svg{color:var(--muted);flex-shrink:0;width:14px;height:14px}
 
-.topbar-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+/* Emergency Alert Trigger */
+.header-alert-bar{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,59,92,0.12);
+  border:1px solid var(--red);
+  border-radius:6px;padding:4px 10px;
+  cursor:pointer;transition:all .2s;
+}
+.header-alert-bar:hover{background:rgba(255,59,92,0.22);box-shadow:0 0 12px rgba(255,59,92,0.3)}
+.header-alert-text{font-size:10.5px;font-weight:700;color:var(--red);letter-spacing:0.04em}
+
+.topbar-right{display:flex;align-items:center;gap:10px;margin-left:auto}
 
 /* Theme Selector */
 .theme-selector{
-  display:flex;align-items:center;gap:4px;
+  display:flex;align-items:center;gap:2px;
   background:var(--surface2);
   border:1px solid var(--border);
   border-radius:6px;padding:2px;
@@ -249,7 +393,7 @@ body{
 .theme-btn{
   background:transparent;border:none;
   color:var(--muted);font-family:var(--mono);font-size:10px;font-weight:600;
-  padding:3px 8px;border-radius:4px;cursor:pointer;transition:all .15s;
+  padding:3px 7px;border-radius:4px;cursor:pointer;transition:all .15s;
 }
 .theme-btn.active{
   background:var(--cyan-dim);color:var(--cyan);
@@ -257,31 +401,61 @@ body{
 }
 
 .export-btn{
-  display:flex;align-items:center;gap:5px;
+  display:flex;align-items:center;gap:4px;
   background:var(--surface2);
   border:1px solid var(--border2);
   color:var(--cyan);
-  font-family:var(--mono);font-size:11px;font-weight:600;
-  padding:5px 10px;border-radius:6px;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;font-weight:600;
+  padding:5px 9px;border-radius:6px;cursor:pointer;
   transition:all .2s;
 }
 .export-btn:hover{background:var(--cyan-dim);border-color:var(--cyan)}
 
-.system-status{
-  display:flex;align-items:center;gap:6px;
-  font-family:var(--mono);font-size:10px;
-  color:var(--green);font-weight:500;
+/* ── Live Emergency Broadcast Banner ────────────────────────────── */
+.live-broadcast-banner{
+  display:none;
+  background:linear-gradient(90deg,rgba(255,59,92,0.95),rgba(255,176,32,0.95));
+  color:#fff;
+  padding:8px 16px;
+  font-family:var(--mono);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.04em;
+  align-items:center;
+  justify-content:space-between;
+  animation:bannerFlash 1.5s infinite alternate;
+  z-index:15;
 }
-.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 1.4s ease-in-out infinite}
+.live-broadcast-banner.show{display:flex}
+@keyframes bannerFlash{
+  from{box-shadow:0 0 15px rgba(255,59,92,0.5)}
+  to{box-shadow:0 0 30px rgba(255,59,92,0.9)}
+}
 
-.avatar{
-  width:30px;height:30px;border-radius:50%;
-  background:linear-gradient(135deg,#2563EB,var(--cyan));
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;cursor:pointer;
+/* ── Emergency Alert Composer Modal ─────────────────────────────── */
+.alert-modal-backdrop{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(8px);
+  z-index:99999;
+  display:none;align-items:center;justify-content:center;
 }
-.topbar-user{font-size:12px;font-weight:500}
-.topbar-role{font-size:10px;color:var(--green)}
+.alert-modal-backdrop.show{display:flex}
+.alert-modal{
+  background:var(--surface);
+  border:2px solid var(--red);
+  box-shadow:0 0 40px rgba(255,59,92,0.4);
+  border-radius:12px;
+  width:90%;max-width:540px;
+  padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.alert-modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);padding-bottom:12px;
+}
+.alert-modal-title{font-size:14px;font-weight:700;color:var(--red);display:flex;align-items:center;gap:8px}
+.alert-modal-close{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer}
 
 /* ── Content Multi-View Containers ─────────────────────────────── */
 .content{
@@ -362,7 +536,7 @@ body{
   background:var(--red-dim);border-radius:4px;
 }
 
-/* 3D Map View Controls */
+/* Map Mode Controls */
 .map-view-toggle{
   display:flex;align-items:center;
   background:var(--surface2);border:1px solid var(--border);
@@ -415,14 +589,47 @@ body{
 .globe-hud-title{font-weight:700;color:#fff;letter-spacing:0.06em;display:flex;align-items:center;gap:6px}
 .globe-hud-sub{font-size:9px;color:var(--dim)}
 
-.map-2d-container{width:100%;height:100%;position:relative}
-.map-svg{width:100%;height:100%;opacity:0.85}
+/* ── Google Satellite 2D Map View ──────────────────────────────── */
+.map-2d-satellite-container{
+  width:100%;height:100%;
+  position:relative;
+  background:#0B141E;
+}
+.sat-svg{width:100%;height:100%;display:block}
+
+/* Satellite Map Controls */
+.sat-layer-bar{
+  position:absolute;top:12px;left:12px;
+  display:flex;gap:4px;z-index:6;
+  background:rgba(6,10,18,0.85);backdrop-filter:blur(8px);
+  padding:4px;border-radius:6px;border:1px solid var(--border2);
+}
+.sat-layer-btn{
+  background:transparent;border:none;
+  color:var(--muted);font-family:var(--mono);font-size:9.5px;font-weight:600;
+  padding:3px 7px;border-radius:4px;cursor:pointer;
+}
+.sat-layer-btn.active{background:var(--cyan-dim);color:var(--cyan)}
+
+/* 2D Interactive Incident & Rescue Camp Pins */
+.sat-pin{
+  position:absolute;transform:translate(-50%,-50%);
+  cursor:pointer;z-index:5;transition:transform .15s;
+}
+.sat-pin:hover{transform:translate(-50%,-50%) scale(1.15);z-index:10}
+.sat-pin-badge{
+  padding:4px 8px;border-radius:12px;
+  font-family:var(--mono);font-size:9.5px;font-weight:700;
+  display:flex;align-items:center;gap:4px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.6);
+  white-space:nowrap;
+}
 
 .map-legend{
   position:absolute;bottom:12px;left:12px;
   background:rgba(6,10,18,0.85);backdrop-filter:blur(8px);
-  border:1px solid var(--border2);border-radius:6px;padding:10px 12px;
-  display:flex;flex-direction:column;gap:5px;z-index:5;
+  border:1px solid var(--border2);border-radius:6px;padding:8px 12px;
+  display:flex;flex-direction:column;gap:4px;z-index:5;
 }
 .legend-item{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--dim)}
 .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -447,14 +654,6 @@ body{
   color:var(--dim);cursor:pointer;font-size:13px;transition:all .15s;
 }
 .map-btn:hover{color:var(--cyan);border-color:var(--cyan)}
-
-/* 2D Incident pins */
-.map-pin{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:4}
-.pin-ring{
-  width:28px;height:28px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:12px;animation:pinPulse 2s ease-in-out infinite;
-}
 
 /* ── 3D AI Neural Core Panel ─────────────────────────────────────── */
 .ai-3d-core-wrap{
@@ -482,6 +681,21 @@ body{
   letter-spacing:0.05em;margin-bottom:4px;display:flex;align-items:center;gap:5px;
 }
 .threat-text{font-size:10px;color:var(--dim);line-height:1.5}
+
+/* ── Rescue Camps List Widget ───────────────────────────────────── */
+.camps-grid{
+  display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));
+  gap:12px;padding:14px;
+}
+.camp-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:6px;
+  transition:all .15s;
+}
+.camp-card:hover{border-color:var(--cyan);transform:translateY(-2px)}
+.camp-card-header{display:flex;align-items:center;justify-content:space-between}
+.camp-name{font-size:12px;font-weight:700;color:var(--text)}
+.camp-status{font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;font-family:var(--mono)}
 
 /* ── Timeline Playback Scrubber Bar ─────────────────────────────── */
 .timeline-scrubber-panel{
@@ -553,20 +767,31 @@ body{
 .mini-stat-sub{font-size:9px;color:var(--muted)}
 
 .timeline-list{
-  overflow-y:auto;max-height:280px;padding:12px 14px;display:flex;flex-direction:column;gap:0;
+  overflow-y:auto;max-height:480px;padding:12px 14px;display:flex;flex-direction:column;gap:0;
 }
-.tl-item{display:flex;gap:12px;position:relative;padding-bottom:16px}
+.tl-item{display:flex;gap:12px;position:relative;padding-bottom:18px}
 .tl-item:last-child{padding-bottom:0}
-.tl-time{font-family:var(--mono);font-size:9.5px;color:var(--muted);width:38px;flex-shrink:0;padding-top:2px}
-.tl-left{display:flex;flex-direction:column;align-items:center;width:12px;flex-shrink:0}
-.tl-dot{width:9px;height:9px;border-radius:50%;border:2px solid var(--cyan);background:var(--surface);flex-shrink:0;margin-top:4px}
+.tl-time{font-family:var(--mono);font-size:10px;color:var(--cyan);width:45px;flex-shrink:0;padding-top:2px;font-weight:700}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:14px;flex-shrink:0}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--cyan);background:var(--surface);flex-shrink:0;margin-top:4px}
 .tl-line{width:1px;background:var(--border2);flex:1;margin:2px 0}
 .tl-body{flex:1;padding-top:1px}
-.tl-title{font-size:11px;font-weight:500;color:var(--text);margin-bottom:3px}
-.tl-badge{display:inline-block;font-size:8.5px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:var(--mono);letter-spacing:0.04em}
-.badge-alert{background:var(--red-dim);color:var(--red)}
-.badge-resp{background:var(--cyan-dim);color:var(--cyan)}
-.badge-update{background:var(--amber-dim);color:var(--amber)}
+.tl-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.tl-desc{font-size:10.5px;color:var(--dim);line-height:1.4;margin-bottom:4px}
+.tl-badge{display:inline-block;font-size:8.5px;font-weight:700;padding:1px 6px;border-radius:3px;font-family:var(--mono);letter-spacing:0.04em}
+
+.timeline-filter-bar{
+  display:flex;gap:6px;padding:10px 14px;
+  background:var(--surface2);border-radius:6px;margin-bottom:12px;overflow-x:auto;
+}
+.tl-filter-btn{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted);font-family:var(--mono);font-size:10px;
+  padding:4px 9px;border-radius:4px;cursor:pointer;transition:all .15s;
+}
+.tl-filter-btn.active{
+  background:var(--cyan-dim);color:var(--cyan);border-color:var(--cyan);
+}
 
 /* ── Multi-view specific tables and layouts ─────────────────────── */
 .data-table-wrap{overflow-x:auto;padding:14px}
@@ -589,10 +814,11 @@ body{
 
 /* ── Input Overlay (Bottom Bar) ────────────────────────────────── */
 .input-overlay{
-  position:fixed;bottom:28px;left:var(--sidebar);right:0;
+  position:fixed;bottom:28px;left:var(--sidebar-w);right:0;
   background:rgba(6,10,18,0.92);backdrop-filter:blur(12px);
   border-top:1px solid var(--border2);padding:10px 16px;
   display:flex;align-items:center;gap:10px;z-index:20;
+  transition:left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .update-input-wrap{flex:1;position:relative}
 .update-input-label{
@@ -658,13 +884,110 @@ body{
 </head>
 <body>
 
+<!-- ── SPLASH INTRO SCREEN WITH GOLDEN CRISISLENS COMPASS LOGO ─── -->
+<div class="splash-screen" id="crisisLensSplashScreen" onclick="dismissSplash()">
+  <div class="splash-card">
+    <div class="splash-emblem-wrap">
+      <div class="splash-reticle-ring"></div>
+      <!-- Golden Compass Emblem matching User's Logo Image -->
+      <svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="badgeBg" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#14314A"/>
+            <stop offset="75%" stop-color="#091827"/>
+            <stop offset="100%" stop-color="#040C15"/>
+          </radialGradient>
+          <linearGradient id="goldGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#FFF3C4"/>
+            <stop offset="40%" stop-color="#FFD166"/>
+            <stop offset="70%" stop-color="#E59800"/>
+            <stop offset="100%" stop-color="#996300"/>
+          </linearGradient>
+          <linearGradient id="goldGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#FFD166"/>
+            <stop offset="60%" stop-color="#B87A00"/>
+            <stop offset="100%" stop-color="#664400"/>
+          </linearGradient>
+          <radialGradient id="cyanLens" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00FFFF"/>
+            <stop offset="40%" stop-color="#0088FF"/>
+            <stop offset="100%" stop-color="#001844"/>
+          </radialGradient>
+          <filter id="goldGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        
+        <!-- Outer Badge Circle -->
+        <rect x="15" y="15" width="170" height="170" rx="40" fill="url(#badgeBg)" stroke="url(#goldGrad1)" stroke-width="3.5"/>
+        
+        <!-- Decorative Border Filigree Ring -->
+        <circle cx="100" cy="100" r="72" fill="none" stroke="url(#goldGrad2)" stroke-width="1.5" stroke-dasharray="3 4"/>
+        <circle cx="100" cy="100" r="66" fill="none" stroke="url(#goldGrad1)" stroke-width="2"/>
+        
+        <!-- 8-Point Compass Star -->
+        <!-- Major Vertical & Horizontal Points -->
+        <polygon points="100,20 106,94 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="100,20 94,94 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="100,180 106,106 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="100,180 94,106 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="20,100 94,106 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="20,100 94,94 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="180,100 106,106 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="180,100 106,94 100,100" fill="url(#goldGrad1)"/>
+        
+        <!-- Diagonal Secondary Points -->
+        <polygon points="45,45 96,92 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="45,45 92,96 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="155,45 104,92 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="155,45 108,96 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="45,155 96,108 100,100" fill="url(#goldGrad2)"/>
+        <polygon points="45,155 92,104 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="155,155 104,108 100,100" fill="url(#goldGrad1)"/>
+        <polygon points="155,155 108,104 100,100" fill="url(#goldGrad2)"/>
+
+        <!-- Concentric Reticle Rings -->
+        <circle cx="100" cy="100" r="44" fill="none" stroke="url(#goldGrad1)" stroke-width="2.5"/>
+        <circle cx="100" cy="100" r="34" fill="none" stroke="url(#goldGrad2)" stroke-width="1.5"/>
+
+        <!-- Center Optical Eye Lens -->
+        <circle cx="100" cy="100" r="22" fill="url(#cyanLens)" stroke="url(#goldGrad1)" stroke-width="2.5" filter="url(#goldGlow)"/>
+        <circle cx="100" cy="100" r="10" fill="#001228" stroke="#00FFFF" stroke-width="1.5"/>
+        <circle cx="97" cy="97" r="3.5" fill="#FFFFFF" opacity="0.9"/>
+      </svg>
+    </div>
+
+    <div class="splash-title">CRISISLENS</div>
+    <div class="splash-sub">AESTHETIC INQUIRY · AI COMMAND CENTER</div>
+    
+    <div class="splash-progress-bar">
+      <div class="splash-progress-fill"></div>
+    </div>
+    <div class="splash-status-text" id="splashStatusText">INITIALIZING SATELLITE TELEMETRY & 3D GLOBE...</div>
+
+    <button class="splash-skip-btn" onclick="dismissSplash()">ENTER COMMAND CENTER →</button>
+  </div>
+</div>
+
 <!-- ── AMBIENT 3D BACKGROUND ─────────────────────────────────── -->
 <canvas id="threeBgCanvas"></canvas>
 
-<!-- ── SIDEBAR (Working Multi-View Navigation) ────────────────── -->
-<div class="sidebar">
-  <div class="sidebar-logo">
-    <div class="logo-icon">🌐</div>
+<!-- ── SLIDABLE SIDEBAR ──────────────────────────────────────── -->
+<div class="sidebar" id="mainSidebar">
+  <div class="sidebar-logo" onclick="toggleSidebar()" title="Click to Collapse / Expand Sidebar (Ctrl+B)">
+    <!-- Golden Compass Mini Logo -->
+    <svg class="brand-logo-svg" viewBox="0 0 200 200">
+      <rect x="15" y="15" width="170" height="170" rx="40" fill="#0F2238" stroke="#FFD166" stroke-width="5"/>
+      <circle cx="100" cy="100" r="66" fill="none" stroke="#FFD166" stroke-width="3"/>
+      <polygon points="100,24 105,95 100,100" fill="#FFE29F"/>
+      <polygon points="100,24 95,95 100,100" fill="#B87A00"/>
+      <polygon points="100,176 105,105 100,100" fill="#B87A00"/>
+      <polygon points="100,176 95,105 100,100" fill="#FFE29F"/>
+      <polygon points="24,100 95,105 100,100" fill="#FFE29F"/>
+      <polygon points="24,100 95,95 100,100" fill="#B87A00"/>
+      <polygon points="176,100 105,105 100,100" fill="#B87A00"/>
+      <polygon points="176,100 105,95 100,100" fill="#FFE29F"/>
+      <circle cx="100" cy="100" r="24" fill="#0088FF" stroke="#FFD166" stroke-width="3"/>
+      <circle cx="100" cy="100" r="8" fill="#001844"/>
+    </svg>
     <div>
       <div class="logo-text">CRISISLENS</div>
       <div class="logo-sub">AI COMMAND CENTER</div>
@@ -675,34 +998,38 @@ body{
     <div class="nav-section-label">Command</div>
     <a class="nav-item active" href="#/dashboard" onclick="switchView('dashboard')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-      Dashboard
+      <span>Dashboard</span>
     </a>
     <a class="nav-item" href="#/map" onclick="switchView('map')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></svg>
-      Crisis Map
+      <span>Crisis Map</span>
     </a>
     <a class="nav-item" href="#/threat" onclick="switchView('threat')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      Threat Engine
+      <span>Threat Engine</span>
       <span class="nav-badge" id="notifBadge">1</span>
+    </a>
+    <a class="nav-item" href="#/camps" onclick="switchView('camps')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-18-7 18"/><path d="M9 16h6"/></svg>
+      <span>Rescue Camps</span>
     </a>
     <a class="nav-item" href="#/units" onclick="switchView('units')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Response Units
+      <span>Response Units</span>
     </a>
     <a class="nav-item" href="#/timeline" onclick="switchView('timeline')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Incident Timeline
+      <span>Incident Timeline</span>
     </a>
 
     <div class="nav-section-label">Intelligence</div>
     <a class="nav-item" href="#/feeds" onclick="switchView('feeds')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Live Feeds
+      <span>Live Feeds</span>
     </a>
     <a class="nav-item" href="#/analytics" onclick="switchView('analytics')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-      Predictive Analytics
+      <span>Predictive Analytics</span>
     </a>
   </div>
 
@@ -721,23 +1048,41 @@ body{
     <div class="mission-since" id="missionSince">Operational since 03 Sep 2026</div>
   </div>
 
-  <div class="emergency-btn" onclick="toast('Emergency Broadcast','Broadcasting high-priority alert to all field responders and command channels','warning')">
+  <div class="emergency-btn" onclick="openAlertModal()">
     <div class="pulse-dot"></div>
-    BROADCAST ALERT
+    <span>BROADCAST ALERT</span>
   </div>
 </div>
 
 <!-- ── MAIN CONTENT AREA ─────────────────────────────────────── -->
 <div class="main">
 
-  <!-- Topbar with Theme Switcher & SitRep Export -->
+  <!-- Top Emergency Broadcast Banner -->
+  <div class="live-broadcast-banner" id="liveBroadcastBanner">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span>🚨 CRITICAL EMERGENCY BROADCAST:</span>
+      <span id="broadcastBannerText">Flood gates opened at Barrage. Evacuate Sector 5 low-lying banks immediately.</span>
+    </div>
+    <button style="background:rgba(0,0,0,0.3);border:none;color:#fff;padding:2px 8px;border-radius:4px;cursor:pointer" onclick="dismissBroadcastBanner()">DISMISS</button>
+  </div>
+
+  <!-- Topbar -->
   <div class="topbar">
+    <!-- Sidebar Slide Toggle Button -->
+    <button class="sidebar-toggle-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Slide Sidebar (Ctrl+B)">☰</button>
+
     <div class="search-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-      <input type="text" placeholder="Search crisis entities, locations, units… (Ctrl+K)"/>
+      <input type="text" placeholder="Search crisis entities, camps…"/>
     </div>
 
-    <!-- Theme Switcher -->
+    <!-- Quick Alert Broadcast Bar -->
+    <div class="header-alert-bar" onclick="openAlertModal()" title="Compose & broadcast emergency alert to all users">
+      <div class="pulse-dot" style="width:6px;height:6px"></div>
+      <span class="header-alert-text">📢 ALERT USERS</span>
+    </div>
+
+    <!-- Theme Selector -->
     <div class="theme-selector">
       <button class="theme-btn active" id="themeCyber" onclick="setTheme('cyber')">CYBER</button>
       <button class="theme-btn" id="themeTactical" onclick="setTheme('tactical')">TACTICAL</button>
@@ -745,22 +1090,17 @@ body{
     </div>
 
     <!-- Export SitRep -->
-    <button class="export-btn" onclick="exportSitRepCSV()">
-      📄 EXPORT CSV
-    </button>
-    <button class="export-btn" onclick="window.print()">
-      🖨 PRINT SITREP
-    </button>
+    <button class="export-btn" onclick="exportSitRepCSV()">📄 CSV</button>
+    <button class="export-btn" onclick="window.print()">🖨 PRINT</button>
 
     <div class="topbar-right">
-      <div class="system-status">
-        <div class="live-dot"></div>
-        SYSTEM OPERATIONAL
-      </div>
-      <div class="avatar" title="Incident Commander">KD</div>
-      <div>
-        <div class="topbar-user">Cmdr. Das</div>
-        <div class="topbar-role">Incident Commander</div>
+      <div class="avatar" title="Commander" onclick="switchView('dashboard')">
+        <svg viewBox="0 0 200 200" width="22" height="22">
+          <circle cx="100" cy="100" r="90" fill="#091827" stroke="#FFD166" stroke-width="8"/>
+          <polygon points="100,20 106,94 100,100" fill="#FFE29F"/>
+          <polygon points="100,20 94,94 100,100" fill="#B87A00"/>
+          <circle cx="100" cy="100" r="30" fill="#00E5FF"/>
+        </svg>
       </div>
     </div>
   </div>
@@ -795,10 +1135,10 @@ body{
           <div class="kpi-sparkline"><canvas id="spark3"></canvas></div>
         </div>
         <div class="kpi tilt-card" style="--accent-a:var(--purple);--accent-b:#C084FC">
-          <div class="kpi-icon" style="background:var(--purple-dim);color:var(--purple)">🛰</div>
-          <div class="kpi-label">TOTAL ENTITIES TRACKED</div>
-          <div class="kpi-value" id="kpiEntities" style="color:var(--purple)">14</div>
-          <div class="kpi-trend" style="color:var(--purple)">● Live telemetry active</div>
+          <div class="kpi-icon" style="background:var(--purple-dim);color:var(--purple)">🏕</div>
+          <div class="kpi-label">RESCUE CAMPS ACTIVE</div>
+          <div class="kpi-value" style="color:var(--purple)">5</div>
+          <div class="kpi-trend" style="color:var(--purple)">● 7,900 Bed Capacity</div>
           <div class="kpi-sparkline"><canvas id="spark4"></canvas></div>
         </div>
         <div class="kpi tilt-card" style="--accent-a:var(--amber);--accent-b:#FFD166">
@@ -816,7 +1156,7 @@ body{
           <div class="panel-header">
             <span class="panel-title">
               <span>LIVE CRISIS MAP</span>
-              <span style="font-size:9px;font-weight:400;color:var(--muted);font-family:var(--mono)">GEOSPATIAL AI ENGINE</span>
+              <span style="font-size:9px;font-weight:400;color:var(--muted);font-family:var(--mono)">3D SATELLITE & 2D AERIAL GRID</span>
             </span>
 
             <!-- Heatmap Layer Toggle -->
@@ -824,42 +1164,96 @@ body{
 
             <!-- 3D / 2D Toggle -->
             <div class="map-view-toggle">
-              <button class="map-view-btn active" id="btn3D" onclick="setMapMode('3d')">🌐 3D HOLOGLOBE</button>
-              <button class="map-view-btn" id="btn2D" onclick="setMapMode('2d')">🗺️ 2D GRID</button>
+              <button class="map-view-btn active" id="btn3D" onclick="setMapMode('3d')">🌐 3D REAL GLOBE</button>
+              <button class="map-view-btn" id="btn2D" onclick="setMapMode('2d')">🗺️ 2D SATELLITE</button>
             </div>
             <div class="live-badge"><div class="pulse-dot" style="background:var(--red);width:5px;height:5px"></div>LIVE</div>
           </div>
           
           <div class="map-container" id="mapContainer">
-            <!-- 3D Three.js Container -->
+            <!-- 3D Three.js Container with Real Earth Map Texture -->
             <div class="globe-3d-container" id="globe3DContainer">
               <div class="globe-hud" id="globeHud">
-                <div class="globe-hud-title">🌐 HOLOGRAPHIC GEOSPATIAL 3D</div>
+                <div class="globe-hud-title">🌐 REAL-TEXTURE SATELLITE GLOBE</div>
                 <div class="globe-hud-sub" id="globeTargetCoords">LAT: 22.5726° N · LON: 88.3639° E</div>
-                <div style="font-size:9px;color:var(--cyan);margin-top:2px">● Drag to rotate (Auto-resumes) · Scroll to zoom</div>
+                <div style="font-size:9px;color:var(--cyan);margin-top:2px">● Drag to rotate · Scroll to zoom · Click pins to target</div>
               </div>
             </div>
 
-            <!-- 2D Fallback Map Container -->
-            <div class="map-2d-container" id="map2DContainer" style="display:none">
-              <svg class="map-svg" viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
+            <!-- 2D Google Satellite Map Style Container -->
+            <div class="map-2d-satellite-container" id="map2DContainer" style="display:none">
+              <div class="sat-layer-bar">
+                <button class="sat-layer-btn active" onclick="setSatMapLayer('satellite', this)">🛰️ Satellite</button>
+                <button class="sat-layer-btn" onclick="setSatMapLayer('hybrid', this)">🗺️ Hybrid</button>
+                <button class="sat-layer-btn" onclick="setSatMapLayer('flood', this)">🌊 Flood Inundation</button>
+              </div>
+
+              <!-- High-Detail Satellite Styled SVG Map of Kolkata & Disaster Zone -->
+              <svg class="sat-svg" viewBox="0 0 700 340" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                  <filter id="glow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <filter id="satGlow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                  <pattern id="urbanSatGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <rect width="40" height="40" fill="#0C1726"/>
+                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(0, 229, 255, 0.05)" stroke-width="0.8"/>
+                  </pattern>
                 </defs>
-                <g stroke="rgba(0,229,255,0.06)" stroke-width="1" fill="none">
-                  <line x1="0" y1="60" x2="700" y2="60"/><line x1="0" y1="120" x2="700" y2="120"/>
-                  <line x1="0" y1="180" x2="700" y2="180"/><line x1="0" y1="240" x2="700" y2="240"/>
-                  <line x1="0" y1="300" x2="700" y2="300"/>
-                </g>
-                <path d="M0,220 Q100,200 200,215 Q280,228 360,210 Q440,195 550,220 Q630,238 700,215"
-                  stroke="rgba(0,112,255,0.25)" stroke-width="8" fill="none" filter="url(#glow)"/>
-                <g font-family="JetBrains Mono,monospace" font-size="9" fill="rgba(0,229,255,0.35)">
-                  <text x="340" y="175" text-anchor="middle">Kolkata</text>
-                  <text x="200" y="320" text-anchor="middle">Howrah</text>
-                  <text x="500" y="50">Salt Lake</text>
-                  <text x="560" y="165">N 24 Parganas</text>
+
+                <!-- Terrain & Urban Base Texture -->
+                <rect width="700" height="340" fill="url(#urbanSatGrid)"/>
+                
+                <!-- River Hooghly Waterway -->
+                <path d="M0,230 Q90,200 180,215 Q270,230 350,210 Q440,190 530,225 Q620,240 700,215"
+                  stroke="#005B96" stroke-width="18" fill="none" opacity="0.85"/>
+                <path d="M0,230 Q90,200 180,215 Q270,230 350,210 Q440,190 530,225 Q620,240 700,215"
+                  stroke="#00A8FF" stroke-width="4" fill="none" opacity="0.6" filter="url(#satGlow)"/>
+
+                <!-- Flood Inundation Zones (Red Translucent Hazard Polygons) -->
+                <polygon points="460,110 560,100 600,160 520,180 440,140" fill="rgba(255, 59, 92, 0.28)" stroke="#FF3B5C" stroke-width="1.5" stroke-dasharray="4 2"/>
+                <polygon points="120,40 220,30 260,80 180,95 110,70" fill="rgba(255, 59, 92, 0.22)" stroke="#FF3B5C" stroke-width="1"/>
+
+                <!-- Major Highways & Arterial Roads -->
+                <!-- NH-12 / Jessore Road -->
+                <path d="M350,0 Q330,100 350,170 Q370,240 350,340" stroke="#FFB020" stroke-width="3" fill="none" opacity="0.85"/>
+                <!-- VIP Road / Airport Corridor -->
+                <path d="M0,110 Q180,95 350,110 Q500,120 700,100" stroke="#E63946" stroke-width="3.5" fill="none" opacity="0.9" stroke-dasharray="8 3"/>
+                <!-- EM Bypass -->
+                <path d="M350,170 Q450,220 520,340" stroke="#00E5FF" stroke-width="2.5" fill="none" opacity="0.8"/>
+
+                <!-- Google Maps Style Location Markers & Labels -->
+                <g font-family="Inter, sans-serif" font-size="10" font-weight="600" fill="#E8EDF5">
+                  <text x="365" y="175">KOLKATA METRO</text>
+                  <text x="510" y="70" fill="#00E5FF">Salt Lake Sector V</text>
+                  <text x="370" y="35" fill="#FFD166">Dum Dum Airport</text>
+                  <text x="140" y="270" fill="#8896AE">Howrah Junction</text>
+                  <text x="540" y="145" fill="#FF3B5C">N 24 Parganas (Flood Zone)</text>
                 </g>
               </svg>
+
+              <!-- Interactive Satellite Pins (Rescue Camps, Incidents, Units) -->
+              <!-- 1. Salt Lake Stadium Camp -->
+              <div class="sat-pin" style="left:72%;top:28%" onclick="openCampModal('saltlake')" title="Salt Lake Stadium Relief Shelter">
+                <div class="sat-pin-badge" style="background:#00D97E;color:#000">🏕 STADIUM SHELTER [78%]</div>
+              </div>
+
+              <!-- 2. VIP Road Flood Block -->
+              <div class="sat-pin" style="left:52%;top:32%" onclick="toast('Road Closure — VIP Road','Eastbound corridor blocked by 2ft flood water. Diverting traffic.','error')" title="VIP Road Flood">
+                <div class="sat-pin-badge" style="background:#FF3B5C;color:#fff">⛔ VIP ROAD CLOSED</div>
+              </div>
+
+              <!-- 3. NDRF Rescue Boats -->
+              <div class="sat-pin" style="left:80%;top:46%" onclick="toast('NDRF Unit Alpha','4 Zodiac inflatable boats active in Sector 4','info')" title="NDRF Rescue Boats">
+                <div class="sat-pin-badge" style="background:#00E5FF;color:#000">🚁 NDRF UNIT ALPHA</div>
+              </div>
+
+              <!-- 4. Netaji Indoor Shelter -->
+              <div class="sat-pin" style="left:48%;top:64%" onclick="openCampModal('netaji')" title="Netaji Indoor Evacuation Hub">
+                <div class="sat-pin-badge" style="background:#00D97E;color:#000">🏕 NETAJI SHELTER [62%]</div>
+              </div>
+
+              <!-- 5. Dum Dum Air Depot -->
+              <div class="sat-pin" style="left:54%;top:12%" onclick="openCampModal('dumdum')" title="Dum Dum Air-Relief Depot">
+                <div class="sat-pin-badge" style="background:#A78BFA;color:#000">✈ AIR DEPOT [30%]</div>
+              </div>
             </div>
 
             <!-- Crisis Select Dropdown -->
@@ -877,11 +1271,10 @@ body{
 
             <!-- Legend -->
             <div class="map-legend">
-              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Major Incident</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Warning</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Info</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Rescue Team</div>
-              <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>Shelter</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Major Incident / Flood</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Rescue Camp / Shelter</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>NDRF / First Responders</div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Road Block / Warning</div>
             </div>
           </div>
         </div>
@@ -908,12 +1301,12 @@ body{
               <span class="ai-stat-val" id="aiPeople">23,845</span>
             </div>
             <div class="ai-stat">
-              <span class="ai-stat-label">Conflict Zones</span>
-              <span class="ai-stat-val" style="color:var(--amber)" id="aiZones">1</span>
+              <span class="ai-stat-label">Rescue Camps Active</span>
+              <span class="ai-stat-val" style="color:var(--green)">5 Hubs</span>
             </div>
             <div class="ai-stat">
-              <span class="ai-stat-label">Rescue Teams</span>
-              <span class="ai-stat-val" style="color:var(--green)" id="aiTeams">12</span>
+              <span class="ai-stat-label">Response Units</span>
+              <span class="ai-stat-val" style="color:var(--cyan)" id="aiTeams">12</span>
             </div>
             <div class="ai-stat">
               <span class="ai-stat-label">Avg Response Time</span>
@@ -940,16 +1333,16 @@ body{
         <div class="scrubber-slider-wrap">
           <input type="range" min="0" max="24" value="14" class="scrubber-slider" id="timelineSlider" oninput="onScrubberSlide(this.value)"/>
           <div class="scrubber-labels">
-            <span>00:00 (Incident Start)</span>
+            <span>00:00 (Start)</span>
             <span>06:00</span>
             <span>12:00</span>
             <span>18:00</span>
-            <span>24:00 (Live Now)</span>
+            <span>24:00 (Live)</span>
           </div>
         </div>
       </div>
 
-      <!-- Bottom row: Feed + Analytics + Timeline -->
+      <!-- Bottom row: Feed + Analytics + Timeline Preview -->
       <div class="bot-row">
 
         <!-- Live Incident Feed with Social Media Tabs -->
@@ -967,9 +1360,6 @@ body{
           </div>
           <div class="feed-list" id="feedList">
             <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Loading incidents…</div>
-          </div>
-          <div style="padding:10px 14px;border-top:1px solid var(--border)">
-            <a href="#/feeds" onclick="switchView('feeds')" style="font-size:11px;color:var(--cyan);text-decoration:none">Open full multi-channel stream →</a>
           </div>
         </div>
 
@@ -1003,7 +1393,7 @@ body{
           </div>
         </div>
 
-        <!-- Crisis Timeline -->
+        <!-- Crisis Timeline (Preview Widget) -->
         <div class="panel tilt-card">
           <div class="panel-header">
             <span class="panel-title">CRISIS TIMELINE</span>
@@ -1012,13 +1402,144 @@ body{
             <div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">Loading timeline…</div>
           </div>
           <div style="padding:10px 14px;border-top:1px solid var(--border)">
-            <a href="#/timeline" onclick="switchView('timeline')" style="font-size:11px;color:var(--cyan);text-decoration:none">View interactive timeline →</a>
+            <a href="#/timeline" onclick="switchView('timeline')" style="font-size:11px;color:var(--cyan);text-decoration:none">View comprehensive timeline (12+ events) →</a>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 2. CRISIS MAP THEATER VIEW -->
+    <!-- 2. NEARBY RESCUE CAMPS VIEW -->
+    <div class="view-section" id="view-camps">
+      <div class="panel tilt-card">
+        <div class="panel-header">
+          <span class="panel-title">🏕️ NEARBY RESCUE CAMPS & EMERGENCY RELIEF SHELTERS</span>
+          <div class="live-badge"><div class="pulse-dot" style="background:var(--green);width:5px;height:5px"></div>5 HUBS OPERATIONAL</div>
+        </div>
+        <div class="camps-grid">
+          <!-- Camp 1 -->
+          <div class="camp-card tilt-card" onclick="openCampModal('saltlake')">
+            <div class="camp-card-header">
+              <span class="camp-name">Salt Lake Stadium Mega-Camp</span>
+              <span class="camp-status sev-low">OPERATIONAL</span>
+            </div>
+            <div style="font-size:11px;color:var(--dim)">📍 Sector III, Bidhannagar (2.1 km away)</div>
+            <div style="margin-top:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span>Occupancy</span>
+                <span style="color:var(--cyan);font-family:var(--mono)">1,950 / 2,500 (78%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:78%;background:var(--cyan)"></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">
+              Supplies: Food, Clean Water, 14 Medics · Route: <span style="color:var(--green)">OPEN</span>
+            </div>
+            <button class="export-btn" style="margin-top:6px;font-size:9.5px;padding:3px" onclick="event.stopPropagation();selectCrisis('FLD-KOL-2026-0947');switchView('dashboard');">TARGET ON MAP</button>
+          </div>
+
+          <!-- Camp 2 -->
+          <div class="camp-card tilt-card" onclick="openCampModal('netaji')">
+            <div class="camp-card-header">
+              <span class="camp-name">Netaji Indoor Stadium Evac Hub</span>
+              <span class="camp-status sev-low">OPERATIONAL</span>
+            </div>
+            <div style="font-size:11px;color:var(--dim)">📍 BBD Bagh / Riverbank (4.8 km away)</div>
+            <div style="margin-top:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span>Occupancy</span>
+                <span style="color:var(--green);font-family:var(--mono)">1,116 / 1,800 (62%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:62%;background:var(--green)"></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">
+              Supplies: Emergency Beds, 8 Medics · Route: <span style="color:var(--green)">OPEN</span>
+            </div>
+            <button class="export-btn" style="margin-top:6px;font-size:9.5px;padding:3px" onclick="event.stopPropagation();selectCrisis('FLD-KOL-2026-0947');switchView('dashboard');">TARGET ON MAP</button>
+          </div>
+
+          <!-- Camp 3 -->
+          <div class="camp-card tilt-card" onclick="openCampModal('newtown')">
+            <div class="camp-card-header">
+              <span class="camp-name">New Town Community Shelter</span>
+              <span class="camp-status sev-low">OPEN</span>
+            </div>
+            <div style="font-size:11px;color:var(--dim)">📍 Action Area 1 (3.4 km away)</div>
+            <div style="margin-top:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span>Occupancy</span>
+                <span style="color:var(--green);font-family:var(--mono)">540 / 1,200 (45%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:45%;background:var(--green)"></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">
+              Supplies: Dry Rations, Baby Food · Route: <span style="color:var(--green)">CLEAR</span>
+            </div>
+            <button class="export-btn" style="margin-top:6px;font-size:9.5px;padding:3px" onclick="event.stopPropagation();selectCrisis('FLD-KOL-2026-0947');switchView('dashboard');">TARGET ON MAP</button>
+          </div>
+
+          <!-- Camp 4 -->
+          <div class="camp-card tilt-card" onclick="openCampModal('dumdum')">
+            <div class="camp-card-header">
+              <span class="camp-name">Dum Dum Airport Air-Relief Depot</span>
+              <span class="camp-status sev-med">AIR RELIEF HUB</span>
+            </div>
+            <div style="font-size:11px;color:var(--dim)">📍 Cargo Complex (6.2 km away)</div>
+            <div style="margin-top:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span>Occupancy</span>
+                <span style="color:var(--purple);font-family:var(--mono)">450 / 1,500 (30%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:30%;background:var(--purple)"></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">
+              Air-Drop Base: Helicopter convoys active
+            </div>
+            <button class="export-btn" style="margin-top:6px;font-size:9.5px;padding:3px" onclick="event.stopPropagation();selectCrisis('FLD-KOL-2026-0947');switchView('dashboard');">TARGET ON MAP</button>
+          </div>
+
+          <!-- Camp 5 -->
+          <div class="camp-card tilt-card" onclick="openCampModal('howrah')">
+            <div class="camp-card-header">
+              <span class="camp-name">Howrah Railway Triage Center</span>
+              <span class="camp-status sev-high">NEAR CAPACITY</span>
+            </div>
+            <div style="font-size:11px;color:var(--dim)">📍 Station Concourse (5.5 km away)</div>
+            <div style="margin-top:6px">
+              <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px">
+                <span>Occupancy</span>
+                <span style="color:var(--red);font-family:var(--mono)">792 / 900 (88%)</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:88%;background:var(--red)"></div></div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);margin-top:4px">
+              Supplies: Critical Triage · Route: <span style="color:var(--amber)">SLOW</span>
+            </div>
+            <button class="export-btn" style="margin-top:6px;font-size:9.5px;padding:3px" onclick="event.stopPropagation();selectCrisis('FLD-KOL-2026-0947');switchView('dashboard');">TARGET ON MAP</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. EXPANDED TIMELINE SECTION -->
+    <div class="view-section" id="view-timeline">
+      <div class="panel tilt-card">
+        <div class="panel-header">
+          <span class="panel-title">⏱️ COMPREHENSIVE 24-HOUR INCIDENT TIMELINE</span>
+          <div class="live-badge"><div class="pulse-dot" style="background:var(--cyan);width:5px;height:5px"></div>LIVE LOG</div>
+        </div>
+        <div style="padding:16px">
+          <div class="timeline-filter-bar">
+            <button class="tl-filter-btn active" onclick="filterTimelineCategory('all', this)">All Events (12)</button>
+            <button class="tl-filter-btn" onclick="filterTimelineCategory('alert', this)">🚨 Alerts (4)</button>
+            <button class="tl-filter-btn" onclick="filterTimelineCategory('response', this)">🚁 Rescue & Medical (4)</button>
+            <button class="tl-filter-btn" onclick="filterTimelineCategory('infrastructure', this)">🌉 Roads & Grid (2)</button>
+            <button class="tl-filter-btn" onclick="filterTimelineCategory('shelter', this)">🏕 Relief Camps (2)</button>
+          </div>
+          <div class="timeline-list" id="fullTimelineList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CRISIS MAP THEATER VIEW -->
     <div class="view-section" id="view-map">
       <div class="panel tilt-card">
         <div class="panel-header">
@@ -1044,9 +1565,6 @@ body{
               <span class="mini-stat-pct" style="color:var(--green)">78% CAPACITY</span>
             </div>
           </div>
-          <p style="color:var(--dim);font-size:12px;margin-bottom:10px">
-            Tactical geospatial theater tracking live beacon coordinates, emergency shelters, road obstructions, and drone reconnaissance overlays.
-          </p>
           <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">
             <h4 style="color:var(--cyan);font-size:12px;margin-bottom:8px">ACTIVE DISASTER COORDINATE GRID</h4>
             <div class="data-table-wrap">
@@ -1061,9 +1579,7 @@ body{
                     <th>Action</th>
                   </tr>
                 </thead>
-                <tbody id="mapCrisisTable">
-                  <!-- Populated dynamically -->
-                </tbody>
+                <tbody id="mapCrisisTable"></tbody>
               </table>
             </div>
           </div>
@@ -1071,7 +1587,7 @@ body{
       </div>
     </div>
 
-    <!-- 3. THREAT ENGINE VIEW -->
+    <!-- 5. THREAT ENGINE VIEW -->
     <div class="view-section" id="view-threat">
       <div class="panel tilt-card">
         <div class="panel-header">
@@ -1108,7 +1624,7 @@ body{
       </div>
     </div>
 
-    <!-- 4. RESPONSE UNITS VIEW -->
+    <!-- 6. RESPONSE UNITS VIEW -->
     <div class="view-section" id="view-units">
       <div class="panel tilt-card">
         <div class="panel-header">
@@ -1171,22 +1687,7 @@ body{
       </div>
     </div>
 
-    <!-- 5. INCIDENT TIMELINE VIEW -->
-    <div class="view-section" id="view-timeline">
-      <div class="panel tilt-card">
-        <div class="panel-header">
-          <span class="panel-title">⏱️ CHRONOLOGICAL INCIDENT PLAYBACK LOG</span>
-          <div class="live-badge"><div class="pulse-dot" style="background:var(--cyan);width:5px;height:5px"></div>24-HOUR RECORD</div>
-        </div>
-        <div style="padding:16px">
-          <div class="timeline-list" id="fullTimelineList">
-            <!-- Populated dynamically -->
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 6. LIVE FEEDS VIEW -->
+    <!-- 7. LIVE FEEDS VIEW -->
     <div class="view-section" id="view-feeds">
       <div class="panel tilt-card">
         <div class="panel-header">
@@ -1195,7 +1696,6 @@ body{
         </div>
         <div style="padding:16px">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
-            <!-- Twitter/X -->
             <div style="background:var(--surface2);padding:14px;border-radius:8px;border:1px solid var(--border)">
               <h4 style="color:var(--cyan);font-size:12px;margin-bottom:8px">🐦 TWITTER / X CRISIS RADAR</h4>
               <div style="font-size:11px;color:var(--dim);margin-bottom:8px">#KolkataFloods #RescueNDRF live scan:</div>
@@ -1204,7 +1704,6 @@ body{
                 <button class="export-btn" style="margin-top:6px;font-size:9px;padding:2px 6px" onclick="ingestSocialFeed('Water entering houses near Salt Lake Sector 5. Please send rescue teams.')">⚡ PROCESS IN GEMINI</button>
               </div>
             </div>
-            <!-- Telegram -->
             <div style="background:var(--surface2);padding:14px;border-radius:8px;border:1px solid var(--border)">
               <h4 style="color:var(--purple);font-size:12px;margin-bottom:8px">✈ TELEGRAM DISPATCH ALERTS</h4>
               <div style="font-size:11px;color:var(--dim);margin-bottom:8px">State Disaster Response Channel:</div>
@@ -1213,7 +1712,6 @@ body{
                 <button class="export-btn" style="margin-top:6px;font-size:9px;padding:2px 6px" onclick="ingestSocialFeed('Relief camp at Salt Lake Stadium operational with 500 extra blankets.')">⚡ PROCESS IN GEMINI</button>
               </div>
             </div>
-            <!-- Radio / IoT -->
             <div style="background:var(--surface2);padding:14px;border-radius:8px;border:1px solid var(--border)">
               <h4 style="color:var(--amber);font-size:12px;margin-bottom:8px">📻 RADIO DISPATCH & SENSORS</h4>
               <div style="font-size:11px;color:var(--dim);margin-bottom:8px">Telemetry IoT Water Gauges:</div>
@@ -1227,7 +1725,7 @@ body{
       </div>
     </div>
 
-    <!-- 7. PREDICTIVE ANALYTICS VIEW -->
+    <!-- 8. PREDICTIVE ANALYTICS VIEW -->
     <div class="view-section" id="view-analytics">
       <div class="panel tilt-card">
         <div class="panel-header">
@@ -1268,8 +1766,52 @@ body{
   </div>
 </div>
 
-<!-- ── INPUT OVERLAY ─────────────────────────────────────────── -->
-<div class="input-overlay">
+<!-- ── EMERGENCY ALERT COMPOSER MODAL (Alert Other Users) ────── -->
+<div class="alert-modal-backdrop" id="alertModalBackdrop">
+  <div class="alert-modal">
+    <div class="alert-modal-header">
+      <div class="alert-modal-title">🚨 EMERGENCY BROADCAST COMPOSER</div>
+      <button class="alert-modal-close" onclick="closeAlertModal()">✕</button>
+    </div>
+    
+    <div>
+      <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.06em">ALERT LEVEL</label>
+      <select id="modalAlertLevel" style="width:100%;margin-top:4px;padding:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;outline:none">
+        <option value="critical">🔴 CRITICAL RED ALERT (Immediate Action)</option>
+        <option value="high">🟡 FLOOD WARNING (High Risk)</option>
+        <option value="evac">🔵 MANDATORY EVACUATION ORDER</option>
+        <option value="info">🟢 ADVISORY / ALL CLEAR</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.06em">TARGET AUDIENCE / CHANNEL</label>
+      <select id="modalAlertAudience" style="width:100%;margin-top:4px;padding:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;outline:none">
+        <option value="all">👥 All Civilians & Field Responders</option>
+        <option value="responders">🚁 NDRF & First Responders Only</option>
+        <option value="medical">🏥 Hospitals, Shelters & Triage Centers</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:0.06em">BROADCAST MESSAGE</label>
+      <textarea id="modalAlertText" rows="3" style="width:100%;margin-top:4px;padding:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;outline:none;resize:none" placeholder="e.g. Flash flood water surge crossing Sector 5. All residents must evacuate immediately to Salt Lake Stadium Shelter."></textarea>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="modalAlertSiren" checked/>
+      <label for="modalAlertSiren" style="font-size:11px;color:var(--dim)">Trigger Audio Siren Alarm on connected command screens</label>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--dim);padding:10px;border-radius:6px;cursor:pointer" onclick="closeAlertModal()">CANCEL</button>
+      <button style="flex:2;background:linear-gradient(135deg,#FF3B5C,#FF6B8B);border:none;color:#fff;font-weight:700;padding:10px;border-radius:6px;cursor:pointer;box-shadow:0 0 15px rgba(255,59,92,0.4)" onclick="sendBroadcastAlert()">🚨 SEND BROADCAST TO ALL USERS</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── INPUT OVERLAY (Bottom Bar) ────────────────────────────────── -->
+<div class="input-overlay" id="bottomInputOverlay">
   <div class="update-input-wrap">
     <div class="update-input-label">
       🤖 AI UPDATE PROCESSOR
@@ -1305,6 +1847,144 @@ let allUpdatesList = [];
 let ws = null;
 let analyticsChart = null;
 let deepAnalyticsChart = null;
+let isSidebarCollapsed = false;
+
+// ── Rich Historical Timeline Events (12+ Comprehensive Events) ─
+const RICH_TIMELINE_EVENTS = [
+  {time:'05:30', title:'Meteorological Alert — Depression in Bay of Bengal', desc:'Severe cyclonic depression moving NW towards coastal Bengal. Red alert issued.', type:'alert', cat:'alert', source:'Meteorological Dept'},
+  {time:'06:45', title:'Early Warning Sensors Breached at Barrackpore', desc:'River Hooghly gauge reached 4.2m, exceeding monsoon warning mark.', type:'alert', cat:'alert', source:'IoT Water Gauge S-04'},
+  {time:'07:30', title:'Flash Flood Surges in North 24 Parganas Lowlands', desc:'Embankment breached in Sector 4. 4 village clusters report water logging up to 1.5m.', type:'alert', cat:'alert', source:'District Magistrate'},
+  {time:'08:15', title:'NDRF 2nd Battalion Mobilized', desc:'Team Alpha & Bravo (36 personnel) deployed with 8 motorized zodiac rescue craft.', type:'response', cat:'response', source:'NDRF HQ'},
+  {time:'09:00', title:'VIP Road Submerged — Airport Corridor Closed', desc:'Eastbound flyover ramp closed due to 2ft waterlogging. Traffic rerouted via Rajarhat.', type:'update', cat:'infrastructure', source:'Kolkata Traffic Police'},
+  {time:'10:30', title:'Air Force Mi-17 V5 Helicopter Winch Operations', desc:'14 stranded rooftop residents rescued from submerged huts in Baguiati basin.', type:'response', cat:'response', source:'IAF Air Command'},
+  {time:'11:45', title:'Salt Lake Stadium Mega-Shelter Activated', desc:'Shelter operational with 2,500 cot capacity, water tankers, and community kitchen.', type:'update', cat:'shelter', source:'Disaster Mgmt Dept'},
+  {time:'12:30', title:'33kV Substation Emergency Cutoff', desc:'Substation submerged in Eastern Sector; automated safety trip to prevent grid electrocution.', type:'alert', cat:'infrastructure', source:'State Electricity Board'},
+  {time:'13:15', title:'SDRF Mobile Medical Triage Deployed', desc:'Field clinic set up with snake antivenom, ORS packets, and emergency antibiotics.', type:'response', cat:'response', source:'Health Dept'},
+  {time:'14:00', title:'1,840 Citizens Evacuated to Emergency Camps', desc:'Combined boat and truck convoys transported affected residents to designated shelters.', type:'update', cat:'shelter', source:'NDRF Field Unit'},
+  {time:'15:10', title:'Durgapur Barrage Floodgates Regulated', desc:'Water release increased to 45,000 cusecs to ease upstream reservoir pressure.', type:'update', cat:'infrastructure', source:'Irrigation Dept'},
+  {time:'16:00', title:'Water Levels Stabilizing Near Howrah', desc:'Receding rate measured at 3.5cm/hr; pumping stations operating at full capacity.', type:'update', cat:'response', source:'Municipal Corp'}
+];
+
+// ── Dismiss Splash Intro Screen ───────────────────────────────
+function dismissSplash(){
+  const splash = document.getElementById('crisisLensSplashScreen');
+  if(splash && !splash.classList.contains('fade-out')){
+    splash.classList.add('fade-out');
+    setTimeout(()=>{ splash.style.display = 'none'; }, 800);
+  }
+}
+
+// ── Slidable Sidebar Functions ────────────────────────────────
+function toggleSidebar(){
+  isSidebarCollapsed = !isSidebarCollapsed;
+  const sidebar = document.getElementById('mainSidebar');
+  const overlay = document.getElementById('bottomInputOverlay');
+  
+  if(sidebar){
+    sidebar.classList.toggle('collapsed', isSidebarCollapsed);
+  }
+  if(overlay){
+    overlay.style.left = isSidebarCollapsed ? '64px' : '220px';
+  }
+
+  // Trigger resize for Three.js & Charts
+  setTimeout(()=>{
+    if(globeCamera && globeRenderer){
+      const c = document.getElementById('globe3DContainer');
+      if(c){
+        globeCamera.aspect = c.clientWidth / c.clientHeight;
+        globeCamera.updateProjectionMatrix();
+        globeRenderer.setSize(c.clientWidth, c.clientHeight);
+      }
+    }
+  }, 320);
+}
+
+// Keyboard shortcut: Ctrl+B / Cmd+B
+document.addEventListener('keydown', e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b'){
+    e.preventDefault();
+    toggleSidebar();
+  }
+});
+
+// ── Emergency Alert Broadcast Modal & Siren Sound ─────────────
+function openAlertModal(){
+  document.getElementById('alertModalBackdrop').classList.add('show');
+}
+function closeAlertModal(){
+  document.getElementById('alertModalBackdrop').classList.remove('show');
+}
+
+function playEmergencySirenAudio(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.6);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.9);
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.2);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 1.2);
+  } catch(e){}
+}
+
+async function sendBroadcastAlert(){
+  const text = document.getElementById('modalAlertText').value.trim();
+  const level = document.getElementById('modalAlertLevel').value;
+  const audience = document.getElementById('modalAlertAudience').value;
+  const withSiren = document.getElementById('modalAlertSiren').checked;
+
+  if(!text){
+    toast('Empty Broadcast','Please enter an alert description before broadcasting','error');
+    return;
+  }
+
+  if(withSiren) playEmergencySirenAudio();
+
+  const banner = document.getElementById('liveBroadcastBanner');
+  const bannerText = document.getElementById('broadcastBannerText');
+  bannerText.textContent = `[${level.toUpperCase()}] ${text} (Target: ${audience})`;
+  banner.classList.add('show');
+
+  if(selectedCrisisId){
+    try{
+      await fetch(`${API}/crises/${selectedCrisisId}/updates/process`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          raw_text:`🚨 EMERGENCY BROADCAST: ${text}`,
+          source:'agency'
+        })
+      });
+      loadCrisisUpdates(selectedCrisisId);
+    } catch(e){}
+  }
+
+  RICH_TIMELINE_EVENTS.unshift({
+    time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', hour12:false}),
+    title: `🚨 EMERGENCY BROADCAST [${level.toUpperCase()}]`,
+    desc: text,
+    type: 'alert',
+    cat: 'alert',
+    source: `Commander Dispatch → ${audience}`
+  });
+  renderComprehensiveTimeline(RICH_TIMELINE_EVENTS);
+
+  closeAlertModal();
+  document.getElementById('modalAlertText').value = '';
+  toast('🚨 Alert Broadcasted', `Dispatched emergency alert to ${audience} across all live channels`, 'warning');
+}
+
+function dismissBroadcastBanner(){
+  document.getElementById('liveBroadcastBanner').classList.remove('show');
+}
 
 // ── Multi-View Navigation (SPA Router) ────────────────────────
 function switchView(viewName){
@@ -1318,14 +1998,12 @@ function switchView(viewName){
     document.getElementById('view-dashboard').classList.add('active');
   }
 
-  // Highlight sidebar item
   document.querySelectorAll('.nav-item').forEach(n => {
     if(n.getAttribute('href') === `#/${viewName}`){
       n.classList.add('active');
     }
   });
 
-  // Re-trigger Three.js and Chart renders if entering map/analytics
   if(viewName === 'map' || viewName === 'dashboard'){
     setTimeout(()=> {
       if(globeCamera && globeRenderer){
@@ -1344,11 +2022,23 @@ function switchView(viewName){
   }
 }
 
-// Listen to URL hash change
 window.addEventListener('hashchange', () => {
   const hash = window.location.hash.replace('#/', '') || 'dashboard';
   switchView(hash);
 });
+
+// ── Rescue Camp Details Popup ─────────────────────────────────
+function openCampModal(campId){
+  const camps = {
+    saltlake: {name:'Salt Lake Stadium Mega-Camp', cap:'1,950 / 2,500 (78%)', medics:'14 Doctors on Duty', route:'Open via EM Bypass', food:'72-Hour Supply Available'},
+    netaji: {name:'Netaji Indoor Stadium Evac Hub', cap:'1,116 / 1,800 (62%)', medics:'8 Doctors on Duty', route:'Open via Strand Road', food:'48-Hour Supply Available'},
+    newtown: {name:'New Town Community Shelter', cap:'540 / 1,200 (45%)', medics:'6 Doctors on Duty', route:'Clear via Major Arterial Rd', food:'60-Hour Supply Available'},
+    dumdum: {name:'Dum Dum Airport Air-Relief Depot', cap:'450 / 1,500 (30%)', medics:'4 Flight Surgeons', route:'Air-Drop Hub Only', food:'Cargo Staging Area'},
+    howrah: {name:'Howrah Railway Triage Center', cap:'792 / 900 (88%)', medics:'10 Doctors on Duty', route:'Heavy Traffic / Waterlogged', food:'Rations Active'}
+  };
+  const c = camps[campId] || camps.saltlake;
+  toast(c.name, `Occupancy: ${c.cap} · ${c.medics} · Route: ${c.route}`, 'success');
+}
 
 // ── Theme Switcher ────────────────────────────────────────────
 function setTheme(themeName){
@@ -1456,7 +2146,67 @@ function initThreeBackground(){
   });
 }
 
-// ── 3D HOLOGRAPHIC GEOSPATIAL GLOBE (Manual Drag + Auto Rotate + 3D Heatmap) ──
+// ── REAL EARTH SATELLITE TEXTURE GENERATOR ────────────────────
+function createRealEarthTexture(){
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+
+  const oceanGrad = ctx.createLinearGradient(0, 0, 0, 1024);
+  oceanGrad.addColorStop(0, '#040b17');
+  oceanGrad.addColorStop(0.5, '#07162c');
+  oceanGrad.addColorStop(1, '#040b17');
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, 0, 2048, 1024);
+
+  ctx.fillStyle = '#102a45';
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 1.5;
+
+  function drawContinent(paths){
+    ctx.beginPath();
+    paths.forEach((p, idx) => {
+      idx === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // India & South Asia
+  drawContinent([[1320, 420], [1400, 430], [1420, 520], [1370, 600], [1340, 540], [1300, 480], [1320, 420]]);
+  // East Asia & China
+  drawContinent([[1400, 320], [1560, 320], [1620, 420], [1500, 500], [1420, 430], [1400, 320]]);
+  // Europe
+  drawContinent([[1000, 260], [1140, 240], [1180, 340], [1080, 380], [980, 340], [1000, 260]]);
+  // Africa
+  drawContinent([[1020, 400], [1160, 420], [1200, 580], [1140, 740], [1040, 620], [960, 460], [1020, 400]]);
+  // North America
+  drawContinent([[320, 220], [540, 240], [600, 360], [480, 440], [380, 440], [280, 320], [320, 220]]);
+  // South America
+  drawContinent([[500, 520], [620, 560], [660, 680], [580, 840], [520, 740], [480, 580], [500, 520]]);
+  // Australia
+  drawContinent([[1620, 640], [1760, 640], [1780, 740], [1660, 780], [1600, 700], [1620, 640]]);
+
+  // City Lights & Nodes
+  ctx.fillStyle = '#00FFFF';
+  for(let i=0; i<300; i++){
+    const x = Math.random() * 2048;
+    const y = 200 + Math.random() * 600;
+    ctx.fillRect(x, y, 2, 2);
+  }
+
+  // Highlight Kolkata Region
+  ctx.fillStyle = '#FF3B5C';
+  ctx.beginPath();
+  ctx.arc(1380, 480, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  return new THREE.CanvasTexture(canvas);
+}
+
+// ── 3D HOLOGRAPHIC GEOSPATIAL GLOBE ──────────────────────────
 let globeScene, globeCamera, globeRenderer, globeGroup, globeBeacons = [];
 let isGlobeDragging = false, prevMouseX = 0, prevMouseY = 0;
 let globeAutoRotate = true;
@@ -1484,57 +2234,50 @@ function initThreeGlobe(){
   globeGroup = new THREE.Group();
   globeScene.add(globeGroup);
 
-  // 1. Dark Core
-  const innerSphereGeom = new THREE.SphereGeometry(74, 36, 36);
-  const innerSphereMat = new THREE.MeshBasicMaterial({color: 0x060E1E, transparent: true, opacity: 0.95});
-  globeGroup.add(new THREE.Mesh(innerSphereGeom, innerSphereMat));
+  const earthTexture = createRealEarthTexture();
+  const earthGeom = new THREE.SphereGeometry(75, 48, 48);
+  const earthMat = new THREE.MeshPhongMaterial({
+    map: earthTexture,
+    bumpScale: 0.05,
+    specular: new THREE.Color(0x00E5FF),
+    shininess: 15,
+    transparent: true,
+    opacity: 0.95
+  });
+  const earthMesh = new THREE.Mesh(earthGeom, earthMat);
+  globeGroup.add(earthMesh);
 
-  // 2. Wireframe Grid
-  const wireGeom = new THREE.SphereGeometry(75, 24, 24);
-  const wireMat = new THREE.MeshBasicMaterial({color: 0x00E5FF, wireframe: true, transparent: true, opacity: 0.16});
+  const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+  globeScene.add(ambLight);
+  const dirLight = new THREE.DirectionalLight(0x00E5FF, 0.8);
+  dirLight.position.set(200, 100, 300);
+  globeScene.add(dirLight);
+
+  const wireGeom = new THREE.SphereGeometry(75.5, 24, 24);
+  const wireMat = new THREE.MeshBasicMaterial({color: 0x00E5FF, wireframe: true, transparent: true, opacity: 0.14});
   globeGroup.add(new THREE.Mesh(wireGeom, wireMat));
 
-  // 3. Dot Matrix Continents
-  const dotCount = 1800;
-  const dotGeom = new THREE.BufferGeometry();
-  const dotPos = new Float32Array(dotCount * 3);
-  const R = 75.5;
-  for(let i=0; i<dotCount; i++){
-    const phi = Math.acos(-1 + (2 * i) / dotCount);
-    const theta = Math.sqrt(dotCount * Math.PI) * phi;
-    dotPos[i*3] = R * Math.cos(theta) * Math.sin(phi);
-    dotPos[i*3+1] = R * Math.sin(theta) * Math.sin(phi);
-    dotPos[i*3+2] = R * Math.cos(phi);
-  }
-  dotGeom.setAttribute('position', new THREE.BufferAttribute(dotPos, 3));
-  const dotMat = new THREE.PointsMaterial({color: 0x00E5FF, size: 1.8, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending});
-  globeGroup.add(new THREE.Points(dotGeom, dotMat));
-
-  // 4. Glowing Atmosphere Aura
   const auraGeom = new THREE.SphereGeometry(82, 32, 32);
-  const auraMat = new THREE.MeshBasicMaterial({color: 0x0070FF, transparent: true, opacity: 0.08, side: THREE.BackSide, blending: THREE.AdditiveBlending});
+  const auraMat = new THREE.MeshBasicMaterial({color: 0x0070FF, transparent: true, opacity: 0.1, side: THREE.BackSide, blending: THREE.AdditiveBlending});
   globeGroup.add(new THREE.Mesh(auraGeom, auraMat));
 
-  // 5. Equatorial Ring
   const ringGeom = new THREE.RingGeometry(88, 89, 64);
   const ringMat = new THREE.MeshBasicMaterial({color: 0x00E5FF, side: THREE.DoubleSide, transparent: true, opacity: 0.35});
   const eqRing = new THREE.Mesh(ringGeom, ringMat);
   eqRing.rotation.x = Math.PI / 2;
   globeGroup.add(eqRing);
 
-  // 6. 3D Heatmap & Inundation Layer
   heatmapGroup = new THREE.Group();
   globeGroup.add(heatmapGroup);
   build3DHeatmapRings();
 
-  // 7. Crisis Beacons
+  // Crisis Beacons
   addGlobeBeacon("FLD-KOL-2026-0947", 22.5726, 88.3639, 0xFF3B5C, "Kolkata Flood Zone");
   addGlobeBeacon("CYC-BOB-2026-0412", 21.1458, 86.8569, 0xFFB020, "Cyclone Dana Alert");
   addGlobeBeacon("LS-UTT-2026-0182", 30.4227, 79.3242, 0xFF3B5C, "Uttarakhand Landslide");
   addGlobeBeacon("DRT-RAJ-2026-0033", 25.7532, 71.3967, 0xA78BFA, "Rajasthan Drought");
   addGlobeBeacon("FLD-ASM-2026-0511", 26.1445, 91.7362, 0x00D97E, "Brahmaputra Flood");
 
-  // Manual Drag Rotation with smooth inertia
   container.addEventListener('mousedown', e => {
     isGlobeDragging = true;
     lastUserInteraction = Date.now();
@@ -1554,7 +2297,6 @@ function initThreeGlobe(){
     prevMouseY = e.clientY;
   });
 
-  // Wheel Zoom
   container.addEventListener('wheel', e => {
     e.preventDefault();
     lastUserInteraction = Date.now();
@@ -1562,11 +2304,9 @@ function initThreeGlobe(){
     globeCamera.position.z = Math.max(140, Math.min(360, globeCamera.position.z));
   }, {passive:false});
 
-  // Animation Loop (Manual + Auto Rotate)
   function animateGlobe(){
     requestAnimationFrame(animateGlobe);
 
-    // Auto-rotate if enabled and user has not dragged in last 3 seconds
     if(globeAutoRotate && (!isGlobeDragging || Date.now() - lastUserInteraction > 3000)){
       targetGlobeRotY += 0.0016;
     }
@@ -1602,10 +2342,10 @@ function initThreeGlobe(){
 
 function build3DHeatmapRings(){
   const coords = [
-    {lat:22.5726, lon:88.3639, color:0xFF3B5C, r:14}, // Kolkata
-    {lat:21.1458, lon:86.8569, color:0xFFB020, r:12}, // Bay of Bengal
-    {lat:30.4227, lon:79.3242, color:0xFF3B5C, r:9},  // Uttarakhand
-    {lat:26.1445, lon:91.7362, color:0x00D97E, r:10}  // Assam
+    {lat:22.5726, lon:88.3639, color:0xFF3B5C, r:14},
+    {lat:21.1458, lon:86.8569, color:0xFFB020, r:12},
+    {lat:30.4227, lon:79.3242, color:0xFF3B5C, r:9},
+    {lat:26.1445, lon:91.7362, color:0x00D97E, r:10}
   ];
 
   coords.forEach(c => {
@@ -1710,6 +2450,12 @@ function setMapMode(mode){
   document.getElementById('map2DContainer').style.display = is3D ? 'none' : 'block';
 }
 
+function setSatMapLayer(layer, btn){
+  document.querySelectorAll('.sat-layer-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  toast('Satellite Layer', `Switched 2D view to ${layer.toUpperCase()} mode`, 'info');
+}
+
 // ── 3D HOLOGRAPHIC AI NEURAL CORE ────────────────────────────
 let aiCoreScene, aiCoreCamera, aiCoreRenderer, aiCoreGroup;
 let aiCoreRotSpeed = 0.012;
@@ -1801,10 +2547,9 @@ function onScrubberSlide(val){
   const min = String(Math.round((val % 1) * 60)).padStart(2, '0');
   document.getElementById('scrubberTimeDisplay').textContent = `${hour}:${min} IST`;
   
-  // Filter timeline display based on simulated hour fraction
   const pct = val / 24;
-  const count = Math.max(1, Math.round(allUpdatesList.length * pct));
-  renderFeed(allUpdatesList.slice(0, count));
+  const count = Math.max(1, Math.round(RICH_TIMELINE_EVENTS.length * pct));
+  renderComprehensiveTimeline(RICH_TIMELINE_EVENTS.slice(0, count));
 }
 
 function toggleTimelinePlayback(){
@@ -1837,6 +2582,42 @@ function stepTimeline(dir){
   let val = Math.max(0, Math.min(24, parseFloat(slider.value) + dir));
   slider.value = val;
   onScrubberSlide(val);
+}
+
+function filterTimelineCategory(cat, btn){
+  document.querySelectorAll('.tl-filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if(cat === 'all'){
+    renderComprehensiveTimeline(RICH_TIMELINE_EVENTS);
+  } else {
+    const filtered = RICH_TIMELINE_EVENTS.filter(e => e.cat === cat);
+    renderComprehensiveTimeline(filtered);
+  }
+}
+
+function renderComprehensiveTimeline(events){
+  const el = document.getElementById('fullTimelineList');
+  if(!el) return;
+  const colorMap = {alert:'#FF3B5C', response:'#00E5FF', update:'#FFB020', infrastructure:'#A78BFA', shelter:'#00D97E'};
+  const badgeMap = {alert:'badge-alert', response:'badge-resp', update:'badge-update', infrastructure:'badge-resp', shelter:'badge-update'};
+  
+  el.innerHTML = events.map((it, i) => `
+    <div class="tl-item">
+      <div class="tl-time">${it.time}</div>
+      <div class="tl-left">
+        <div class="tl-dot" style="border-color:${colorMap[it.type]||'#00E5FF'}"></div>
+        ${i < events.length - 1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px">
+          <div class="tl-title">${it.title}</div>
+          <span class="tl-badge ${badgeMap[it.type]||'badge-resp'}">${(it.type).toUpperCase()}</span>
+        </div>
+        <div class="tl-desc">${it.desc}</div>
+        <div style="font-size:9.5px;color:var(--muted)">Source: <span style="color:var(--cyan)">${it.source||'Disaster Ops'}</span></div>
+      </div>
+    </div>
+  `).join('');
 }
 
 // ── Multi-channel Ingestion (Social / Radio) ───────────────────
@@ -1949,7 +2730,6 @@ async function loadDashboard(){
     document.getElementById('kpiTotal').textContent   = d.total_crises;
     document.getElementById('kpiActive').textContent  = d.active_crises;
     document.getElementById('kpiResolved').textContent= Math.max(0,d.total_crises-d.active_crises);
-    document.getElementById('kpiEntities').textContent= d.total_entities;
     document.getElementById('kpiConflicts').textContent= d.conflicts_pending;
     document.getElementById('aiEntities').textContent = (d.total_entities).toLocaleString();
     document.getElementById('notifBadge').textContent = d.conflicts_pending||0;
@@ -1958,11 +2738,11 @@ async function loadDashboard(){
     drawSparkline('spark1','#00E5FF',rnd(d.total_crises));
     drawSparkline('spark2','#FF3B5C',rnd(d.active_crises));
     drawSparkline('spark3','#00D97E',rnd(Math.max(1,d.total_crises-d.active_crises)));
-    drawSparkline('spark4','#A78BFA',rnd(d.total_entities));
+    drawSparkline('spark4','#A78BFA',rnd(5));
     drawSparkline('spark5','#FFB020',rnd(d.conflicts_pending||2));
 
     renderTimeline(d.recent_updates||[]);
-    renderFullTimeline(d.recent_updates||[]);
+    renderComprehensiveTimeline(RICH_TIMELINE_EVENTS);
 
     const now = new Date().toLocaleString('en-IN',{dateStyle:'short',timeStyle:'medium'});
     document.getElementById('lastUpdated').textContent = `LAST UPDATED: ${now} IST`;
@@ -1981,7 +2761,6 @@ async function loadCrises(){
     const sel = document.getElementById('crisisSelect');
     sel.innerHTML='<option value="">Select Active Crisis…</option>';
     
-    // Populate Map Table as well
     const tableBody = document.getElementById('mapCrisisTable');
     if(tableBody) tableBody.innerHTML = '';
 
@@ -1999,7 +2778,7 @@ async function loadCrises(){
           <td style="font-family:var(--mono)">${c.latitude||22.57}° N, ${c.longitude||88.36}° E</td>
           <td><span class="feed-sev ${c.status==='active'?'sev-high':'sev-low'}">${c.status.toUpperCase()}</span></td>
           <td style="color:var(--amber)">High Risk Zone</td>
-          <td><button class="export-btn" style="font-size:9px;padding:2px 6px" onclick="selectCrisis('${c.id}');switchView('dashboard');">TARGET ON GLOBE</button></td>
+          <td><button class="export-btn" style="font-size:9px;padding:2px 6px" onclick="selectCrisis('${c.id}');switchView('dashboard');">TARGET ON MAP</button></td>
         `;
         tableBody.appendChild(tr);
       }
@@ -2041,7 +2820,6 @@ async function loadCrisisUpdates(id){
     const updates = await r.json();
     allUpdatesList = updates;
     renderFeed(updates);
-    renderFullTimeline(updates);
   } catch(e){ renderDemoFeed(); }
 }
 
@@ -2071,7 +2849,10 @@ function renderFeed(updates){
 
 function renderTimeline(updates){
   const el = document.getElementById('timelineList');
-  if(!updates||!updates.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No timeline events</div>';return;}
+  if(!updates||!updates.length){
+    renderDemoTimeline();
+    return;
+  }
   const colors=['#FF3B5C','#FF3B5C','#00E5FF','#00E5FF','#FFB020'];
   el.innerHTML = updates.slice(0,6).map((u,i)=>{
     const cl = u.conflict_status==='conflict'?'badge-alert':u.change_detected?'badge-resp':'badge-update';
@@ -2088,27 +2869,6 @@ function renderTimeline(updates){
       </div>
     </div>`;
   }).join('');
-}
-
-function renderFullTimeline(updates){
-  const el = document.getElementById('fullTimelineList');
-  if(!el) return;
-  if(!updates||!updates.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:11px">No full timeline entries recorded</div>';return;}
-  el.innerHTML = updates.map((u,i)=>`
-    <div class="tl-item">
-      <div class="tl-time" style="width:70px">${fmtTime(u.created_at)}</div>
-      <div class="tl-left">
-        <div class="tl-dot" style="border-color:var(--cyan);background:transparent"></div>
-        ${i<updates.length-1?'<div class="tl-line"></div>':''}
-      </div>
-      <div class="tl-body">
-        <div class="tl-title" style="font-size:12px;font-weight:600">${u.raw_text}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">
-          Source: <span style="color:var(--cyan)">${u.source}</span> · AI Recommended: <em>${u.ai_extracted?.action_recommended||'Monitor situation'}</em>
-        </div>
-      </div>
-    </div>
-  `).join('');
 }
 
 // ── Process Update ────────────────────────────────────────────
@@ -2185,18 +2945,18 @@ function loadDemoData(){
   document.getElementById('kpiTotal').textContent   = demo.total_crises;
   document.getElementById('kpiActive').textContent  = demo.active_crises;
   document.getElementById('kpiResolved').textContent= 2;
-  document.getElementById('kpiEntities').textContent= demo.total_entities;
   document.getElementById('kpiConflicts').textContent= demo.conflicts_pending;
 
   const rnd=(b,n=7)=>Array.from({length:n},(_,i)=>Math.max(0,b+Math.round((Math.random()-0.4)*b*0.3)+i));
   drawSparkline('spark1','#00E5FF',rnd(5));
   drawSparkline('spark2','#FF3B5C',rnd(3));
   drawSparkline('spark3','#00D97E',rnd(2));
-  drawSparkline('spark4','#A78BFA',rnd(14));
+  drawSparkline('spark4','#A78BFA',rnd(5));
   drawSparkline('spark5','#FFB020',[2,3,1,4,2,5,3]);
 
   renderDemoFeed();
   renderDemoTimeline();
+  renderComprehensiveTimeline(RICH_TIMELINE_EVENTS);
 
   const now = new Date().toLocaleString('en-IN',{dateStyle:'short',timeStyle:'medium'});
   document.getElementById('lastUpdated').textContent = `LAST UPDATED: ${now} IST`;
@@ -2225,7 +2985,6 @@ function renderDemoFeed(){
   ];
   allUpdatesList = items;
   renderFeed(items);
-  renderFullTimeline(items);
 }
 
 function renderDemoTimeline(){
@@ -2284,6 +3043,9 @@ window.addEventListener('load', ()=>{
   loadDashboard();
   loadCrises();
   startClock();
+
+  // Auto-dismiss Splash Intro Screen after 2.2 seconds
+  setTimeout(dismissSplash, 2200);
 
   // Route initial hash
   const initialHash = window.location.hash.replace('#/', '') || 'dashboard';
