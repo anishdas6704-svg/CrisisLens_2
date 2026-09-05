@@ -1,0 +1,40 @@
+﻿# CrisisLens Backend - Python Dependencies
+
+# Web Framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Database
+asyncpg==0.29.0
+sqlalchemy==2.0.30
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# Google Gemini AI
+google-generativeai==0.7.2
+
+# Validation & Settings
+pydantic==2.7.1
+pydantic-settings==2.3.3
+python-dotenv==1.0.1
+
+# HTTP Client
+httpx==0.27.0
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+
+# Date/Time
+python-dateutil==2.9.0
+
+# WebSockets (real-time dashboard updates)
+websockets==12.0
+
+# Logging
+loguru==0.7.2
+
+# Testing
+pytest==8.2.2
+pytest-asyncio==0.23.7
